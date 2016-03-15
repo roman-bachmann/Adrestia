@@ -1,6 +1,6 @@
 /**
   @Project ADRESTIA; CS211 - Introduction to Visual Computing
-  @File Game.pde
+  @File Mover.pde
   @Authors Roman Bachmann
            Michael Allemann
            Andrea Caforio
