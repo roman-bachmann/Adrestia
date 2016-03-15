@@ -15,9 +15,10 @@ class Mover {
   private float xMax;
   private float yMin;
   private float yMax;
+  private float ballRadius;
   
-  Mover(float xMin, float xMax, float yMin, float yMax) {
-    this.location = new PVector(width/2, height/2);
+  Mover(float xMin, float xMax, float yMin, float yMax, float ballRadius) {
+    this.location = new PVector(0, 0);
     this.velocity = new PVector(0, 0);
     this.gravity = new PVector(0, 0);
     
@@ -25,6 +26,7 @@ class Mover {
     this.xMax = xMax;
     this.yMin = yMin;
     this.yMax = yMax;
+    this.ballRadius = ballRadius;
   }
       
   void update(float rX, float rZ) {
@@ -52,7 +54,7 @@ class Mover {
     stroke(0);
     strokeWeight(2);
     fill(200);
-    sphere(20);
+    sphere(ballRadius);
   }
           
   void checkEdges() {
