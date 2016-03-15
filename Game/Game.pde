@@ -17,13 +17,15 @@ void setup() {
 private final static float boxX = 300;
 private final static float boxY = 20;
 private final static float boxZ = 300;
+private final static float ballRadius = 20;
 
 private float rX = 0;
 private float rZ = 0;
 private float speed = 1;
 
 private final static float smoothness = 0.01;
-private Mover ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2);
+private Mover ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius);
+private final static float ballOffset = ballRadius + (boxY / 2) + 1;
 
 void draw() {
   background(255, 255, 255);
@@ -34,7 +36,7 @@ void draw() {
   rotateZ(rZ);
   box(boxX, boxY, boxZ);
   
-  translate(ball.location.x, -31, -ball.location.y);
+  translate(ball.location.x, -ballOffset, -ball.location.y);
   ball.update(rX, rZ);
   ball.display();
   ball.checkEdges();
