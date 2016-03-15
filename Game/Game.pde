@@ -14,20 +14,31 @@ void setup() {
   noStroke();
 }
 
-float rX = 0;
-float rZ = 0;
-float speed = 1;
+private final static float boxX = 300;
+private final static float boxY = 20;
+private final static float boxZ = 300;
 
-final float smoothness = 0.01;
+private float rX = 0;
+private float rZ = 0;
+private float speed = 1;
+
+private final static float smoothness = 0.01;
+private Mover ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2);
 
 void draw() {
-  background(200);
+  background(255, 255, 255);
   lights();
   pushMatrix();
-  translate(width/2, height/2, 0); // Box including the rotation in the center of the screen
+  translate(width/2, height/2, 0);
   rotateX(rX);
   rotateZ(rZ);
-  box(300, 20, 300);
+  box(boxX, boxY, boxZ);
+  
+  translate(ball.location.x, -31, -ball.location.y);
+  ball.update(rX, rZ);
+  ball.display();
+  ball.checkEdges();
+  
   popMatrix();
   text("X rotation = " + Math.round(Math.toDegrees(rX) * 100.0) / 100.0, 20, 20);
   text("Z rotation = " + Math.round(Math.toDegrees(rZ) * 100.0) / 100.0, 20, 40);
