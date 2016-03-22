@@ -36,6 +36,7 @@ class Mover {
     velocity.add(gravity);
     velocity.add(friction());
     location.add(velocity);
+    checkCylinderCollision();
   }
   
   PVector friction() {
@@ -74,4 +75,15 @@ class Mover {
          location.y = yMin;
     }
   } 
+  
+  void checkCylinderCollision() {
+    for(PVector c : cylinders) {
+      float d = location.dist(c);
+      if (d <= ballRadius + cylinderBaseSize) {
+        PVector n = c.copy().sub(location).normalize();
+        velocity.sub(n.copy().mult(2 * (velocity.dot(n))));
+        location = c.copy().add(n.mult(-d*1.1));
+      }
+    }
+  }
 }
