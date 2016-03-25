@@ -12,7 +12,7 @@ void settings() {
 
 void setup() {
   noStroke();
-  drawCylinder();
+  createCylinder();
 }
 
 private final static float boxX = 300;
@@ -22,16 +22,16 @@ private final static float ballRadius = 20;
 
 private boolean shiftDown = false;
 private boolean mouseClick = false;
-public float cylinderBaseSize = 10;
+public float cylinderBaseRadius = 10;
 private float cylinderHeight = 50;
 private int cylinderResolution = 40;
 private PShape openCylinder = new PShape();
 private PShape cylinderTop = new PShape();
 private PShape cylinderBottom = new PShape();
-public ArrayList<PVector> cylinders = new ArrayList<PVector>();
+public ArrayList<PVector> cylinders = new ArrayList<PVector>(); // stores the position of all cylinders
 
-private float rX = 0;
-private float rZ = 0;
+private float rX = 0;    // rotation of the board in the x axis
+private float rZ = 0;    // rotation of the board in the y axis
 private float speed = 1;
 
 private final static float smoothness = 0.01;
@@ -41,7 +41,10 @@ private final static float ballOffset = ballRadius + (boxY / 2) + 1;
 void draw() {
   background(255, 255, 255);
   lights();
+  fill(200);
   
+  // If the SHIFT button is pressed go into Object Placement Mode,
+  // else run the game
   if (!shiftDown) {
     pushMatrix();
     translate(width/2, height/2, 0);
@@ -70,6 +73,7 @@ void draw() {
   }
   popMatrix();
   
+  fill(50);
   text("X rotation = " + Math.round(Math.toDegrees(rX) * 100.0) / 100.0, 20, 20);
   text("Z rotation = " + Math.round(Math.toDegrees(rZ) * 100.0) / 100.0, 20, 40);
   text("Speed = " + Math.round(speed * 100.0) / 100.0, 20, 60);
@@ -100,41 +104,54 @@ void mouseWheel(MouseEvent event) {
   else if (e < 0 && speed > 0.2) { speed -= 0.03; }
 }
 
+/**
+  Registers the push of a key
+*/
 void keyPressed() {
   if ((key==CODED) && (keyCode == SHIFT))
     shiftDown = true;
 }
 
+/**
+  Registers the release of a key
+*/
 void keyReleased() {
   if ((key==CODED) && (keyCode == SHIFT))
     shiftDown = false;
 }
 
+/**
+  Registers a mouse click
+*/
 void mouseClicked() {
   if (shiftDown)
     mouseClick = true;
 }
 
-void drawCylinder() {
+/**
+  Create the shapes of a closed cylinder
+*/
+void createCylinder() {
   float angle;
   float[] x = new float[cylinderResolution + 1];
   float[] y = new float[cylinderResolution + 1];
-  //get the x and y position on a circle for all the sides
+  // Get the x and y position on a circle for all the sides
   for(int i = 0; i < x.length; i++) {
     angle = (TWO_PI / cylinderResolution) * i;
-    x[i] = sin(angle) * cylinderBaseSize;
-    y[i] = cos(angle) * cylinderBaseSize;
+    x[i] = sin(angle) * cylinderBaseRadius;
+    y[i] = cos(angle) * cylinderBaseRadius;
   }
   
+  // Create the border of the cylinder
   openCylinder = createShape();
   openCylinder.beginShape(QUAD_STRIP);
-  //draw the border of the cylinder
   for(int i = 0; i < x.length; i++) {
     openCylinder.vertex(x[i], y[i] , 0);
     openCylinder.vertex(x[i], y[i], cylinderHeight);
   }
   openCylinder.endShape();
   
+  // Create the bottom face of the cylinder
   cylinderBottom = createShape();
   cylinderBottom.beginShape(TRIANGLE);
   for(int i = 0; i < x.length - 1; i++) {
@@ -144,6 +161,7 @@ void drawCylinder() {
   }
   cylinderBottom.endShape();
   
+  // Create the top face of the cylinder
   cylinderTop = createShape();
   cylinderTop.beginShape(TRIANGLE);
   for(int i = 0; i < x.length - 1; i++) {
@@ -154,6 +172,10 @@ void drawCylinder() {
   cylinderTop.endShape();
 }
 
+/**
+  Draws all the cylinder shapes using the positions stored
+  in the cylinders ArrayList
+*/
 void drawCylinders() {
   for(PVector c : cylinders) {
       pushMatrix();

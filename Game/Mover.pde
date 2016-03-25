@@ -29,6 +29,11 @@ class Mover {
     this.ballRadius = ballRadius;
   }
       
+  /**
+    Updates the balls velocity and location based on the
+    rotation of the board, the ball's friction and the 
+    collisions with the board edges and cylinders
+  */
   void update(float rX, float rZ) {
     gravity.x = sin(rZ) * 0.1;
     gravity.y = sin(rX) * 0.1;
@@ -39,9 +44,12 @@ class Mover {
     checkCylinderCollision();
   }
   
+  /**
+    Returns the friction vector of the ball
+  */
   PVector friction() {
     float normalForce = 1;
-    float mu = 0.01;
+    float mu = 0.025;
     float frictionMagnitude = normalForce * mu;
     PVector friction = velocity.copy();
     
@@ -51,13 +59,17 @@ class Mover {
     return friction;
   }
       
+  /**
+    Draws a sphere with radius ballRadius
+  */
   void display() {
-    stroke(0);
-    strokeWeight(2);
-    fill(200);
     sphere(ballRadius);
   }
-          
+  
+  /**
+    Rebounce calculation when the ball hits the
+    edge of the playing board
+  */
   void checkEdges() {
     if (location.x >= xMax) {
        velocity.x = velocity.x * -0.55;
@@ -76,13 +88,16 @@ class Mover {
     }
   } 
   
+  /**
+    Rebounce calculation when the ball hits a cylinder
+  */
   void checkCylinderCollision() {
     for(PVector c : cylinders) {
       float d = location.dist(c);
-      if (d <= ballRadius + cylinderBaseSize) {
+      if (d <= ballRadius + cylinderBaseRadius) {
         PVector n = c.copy().sub(location).normalize();
         velocity.sub(n.copy().mult(2 * (velocity.dot(n))));
-        location = c.copy().add(n.mult(-d*1.1));
+        location = c.copy().add(n.mult(-d*1.01));
       }
     }
   }
