@@ -7,22 +7,25 @@
 */
 
 void settings() {
-  size(800, 800, P3D);
+  size(1024, 720, P3D);
 }
 
 void setup() {
   noStroke();
   createCylinder();
+  dashboard = new Dashboard();
+  ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius, dashboard);
+  
 }
 
 private final static float boxX = 300;
 private final static float boxY = 20;
 private final static float boxZ = 300;
-private final static float ballRadius = 20;
+private final static float ballRadius = 10;
 
 private boolean shiftDown = false;
 private boolean mouseClick = false;
-public float cylinderBaseRadius = 10;
+public float cylinderBaseRadius = 20;
 private float cylinderHeight = 50;
 private int cylinderResolution = 40;
 private PShape openCylinder = new PShape();
@@ -34,9 +37,13 @@ private float rX = 0;    // rotation of the board in the x axis
 private float rZ = 0;    // rotation of the board in the y axis
 private float speed = 1;
 
+private Dashboard dashboard;
+
 private final static float smoothness = 0.01;
-private Mover ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius);
+private Mover ball;
 private final static float ballOffset = ballRadius + (boxY / 2) + 1;
+
+
 
 void draw() {
   background(255, 255, 255);
@@ -73,10 +80,10 @@ void draw() {
   }
   popMatrix();
   
-  fill(50);
-  text("X rotation = " + Math.round(Math.toDegrees(rX) * 100.0) / 100.0, 20, 20);
-  text("Z rotation = " + Math.round(Math.toDegrees(rZ) * 100.0) / 100.0, 20, 40);
-  text("Speed = " + Math.round(speed * 100.0) / 100.0, 20, 60);
+  fill(255, 255, 255);
+  dashboard.drawBackground();
+  dashboard.drawTopView(cylinders, cylinderBaseRadius, ballRadius, ball.location, boxX);
+  dashboard.drawTextView();
 }
 
 /**

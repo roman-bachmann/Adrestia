@@ -17,7 +17,9 @@ class Mover {
   private float yMax;
   private float ballRadius;
   
-  Mover(float xMin, float xMax, float yMin, float yMax, float ballRadius) {
+  private Dashboard dashboard;
+  
+  Mover(float xMin, float xMax, float yMin, float yMax, float ballRadius, Dashboard dashboard) {
     this.location = new PVector(0, 0);
     this.velocity = new PVector(0, 0);
     this.gravity = new PVector(0, 0);
@@ -27,6 +29,8 @@ class Mover {
     this.yMin = yMin;
     this.yMax = yMax;
     this.ballRadius = ballRadius;
+    
+    this.dashboard = dashboard;
   }
       
   /**
@@ -42,6 +46,7 @@ class Mover {
     velocity.add(friction());
     location.add(velocity);
     checkCylinderCollision();
+    dashboard.setVelocity(velocity.mag());
   }
   
   /**
@@ -72,17 +77,21 @@ class Mover {
   */
   void checkEdges() {
     if (location.x >= xMax) {
+       dashboard.setScore(-velocity.mag());
        velocity.x = velocity.x * -0.55;
        location.x = xMax;
     } else if (location.x <= xMin) {
+        dashboard.setScore(-velocity.mag());
         velocity.x = velocity.x * -0.55;
         location.x = xMin;
     }
      
     if (location.y >= yMax) {
+        dashboard.setScore(-velocity.mag());
          velocity.y = velocity.y * -1;
          location.y = yMax;
     } else if (location.y <= yMin) {
+         dashboard.setScore(-velocity.mag());
          velocity.y = velocity.y * -1;
          location.y = yMin;
     }
@@ -98,6 +107,7 @@ class Mover {
         PVector n = c.copy().sub(location).normalize();
         velocity.sub(n.copy().mult(2 * (velocity.dot(n))));
         location = c.copy().add(n.mult(-d*1.01));
+        dashboard.setScore(velocity.mag());
       }
     }
   }
