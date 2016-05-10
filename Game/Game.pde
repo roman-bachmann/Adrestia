@@ -14,8 +14,7 @@ void setup() {
   noStroke();
   createCylinder();
   dashboard = new Dashboard();
-  ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius, dashboard);
-  
+  ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius, dashboard); 
 }
 
 private final static float boxX = 300;
@@ -38,9 +37,9 @@ private float rZ = 0;    // rotation of the board in the y axis
 private float speed = 1;
 
 private Dashboard dashboard;
+private Mover ball;
 
 private final static float smoothness = 0.01;
-private Mover ball;
 private final static float ballOffset = ballRadius + (boxY / 2) + 1;
 
 
