@@ -15,15 +15,15 @@ import java.util.ArrayList;
 import java.util.Random;
 
 private PImage img;
-private float hue1, hue2;
-private final static float lower = 20;
-private final static float upper = 235;
-private final static float saturationBound = 40;
+private float hue1, hue2;                          // Lower and upper bound for the hue thresholding
+private final static float lower = 20;             // Lower bound for the brightness thresholding
+private final static float upper = 235;            // Upper bound for the brightness thresholding
+private final static float saturationBound = 40;   // Bound for the saturation thresholding
 
-private final static int minVotes = 190;
-private final static int nLines = 6;
+private final static int minVotes = 190;           // Minimal accumulator value for line selection in Hough transform
+private final static int nLines = 6;               // Maximal number of lines the Hough transform returns
 
-private float[][] gauss = { {  9, 12,  9 },
+private float[][] gauss = { {  9, 12,  9 },        // Kernel used to perform a gaussian blur
                             { 12, 15, 12 },
                             {  9, 12,  9 } };
 
@@ -32,7 +32,7 @@ void settings() {
 }
 
 void setup() {
-  img = loadImage("board4.jpg");
+  img = loadImage("board1.jpg");
   noLoop(); // no interactive behaviour: draw() will be called only once. 
   
   // Hues that are primarily green
@@ -143,7 +143,8 @@ PImage convolute(PImage img, float[][] kernel) {
 }
 
 /**
- * Performs the sobel algorithm on a given image
+ * Performs the sobel filter on a given image, creating an
+ * image that emphasizes the edges.
  */
 PImage sobel(PImage img) {
   float[][] hKernel = { { 0, 1, 0 }, 
@@ -163,7 +164,7 @@ PImage sobel(PImage img) {
     res.pixels[i] = color(0);
   }
   
-  float max=0;
+  float max = 0;
   float[] buffer = new float[img.width * img.height];
   
   // Double convolution of the two kernels hKernel and vKernel on the image
@@ -204,7 +205,7 @@ PImage sobel(PImage img) {
 
 /**
  * Performs edge detection using the Hough transform.
- * Returns the nLines best lines found.
+ * Returns at most the nLines best lines found.
  */
 ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   
@@ -229,6 +230,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   // Our accumulator (with a 1 pix margin around)
   int[] accumulator = new int[(phiDim + 2) * (rDim + 2)];
   
+  // Initialize the accumulator to 0 in every pixel
   for (int i = 0; i < (phiDim + 2) * (rDim + 2); i++) {
     accumulator[i] = 0;
   }
@@ -297,7 +299,6 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   java.util.Collections.sort(bestCandidates, new HoughComparator(accumulator));
   
   ArrayList<PVector> lines = new ArrayList<PVector>();
-  println("Nb best candidates: " + bestCandidates.size());
   int nBest = (nLines <= bestCandidates.size()) ? nLines : bestCandidates.size();
   for (int i = 0; i < nBest; i++) {
     int idx = bestCandidates.get(i);
@@ -364,7 +365,7 @@ void drawLine(int edgeImgWidth, float r, float phi) {
 }
 
 /**
- * Computes and draws all the intersections of a List of lines.
+ * Computes all the intersections of a List of lines
  */
 ArrayList<PVector> getIntersections(List<PVector> lines) {
   ArrayList<PVector> intersections = new ArrayList<PVector>();
@@ -406,19 +407,21 @@ void drawQuads(List<int[]> quads, ArrayList<PVector> lines) {
     PVector c34 = quadCorners.get(2);
     PVector c41 = quadCorners.get(3);
     
+    // Draws the corners of the quad
     fill(255, 128, 0);
     ellipse(c12.x, c12.y, 10, 10);
     ellipse(c23.x, c23.y, 10, 10);
     ellipse(c34.x, c34.y, 10, 10);
     ellipse(c41.x, c41.y, 10, 10);
     
+    // Draws the edges of the quad
     stroke(204,102,0);
     line(c12.x, c12.y, c23.x, c23.y);
     line(c23.x, c23.y, c34.x, c34.y);
     line(c34.x, c34.y, c41.x, c41.y);
     line(c41.x, c41.y, c12.x, c12.y);
     
-    // Choose a random, semi-transparent colour
+    // Choose a random, semi-transparent colour and draw the quad surface
     Random random = new Random();
     fill(color(min(255, random.nextInt(300)),
     min(255, random.nextInt(300)),
