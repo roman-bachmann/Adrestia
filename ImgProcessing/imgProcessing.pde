@@ -1,60 +1,64 @@
+/**
+ * @Project ADRESTIA; CS211 - Introduction to Visual Computing
+ * @file imgProcessing.pde
+ * @brief Detection of a green lego board
+ *
+ * @authors Michael Allemann
+ *          Roman Bachmann
+ *          Andrea Caforio
+ * @date 13.06.2016
+ */
+
 import processing.video.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
 
-PImage img, result;
-//HScrollbar hueBar1, hueBar2;
-float hue1, hue2;
-float lower = 10;
-float upper = 245;
-float saturationBound = 30;
+private PImage img;
+private float hue1, hue2;
+private final static float lower = 20;
+private final static float upper = 235;
+private final static float saturationBound = 40;
 
-int minVotes = 200;
-int nLines = 10;
+private final static int minVotes = 190;
+private final static int nLines = 6;
 
-float[][] gauss = { {  9, 12,  9 },
-                    { 12, 15, 12 },
-                    {  9, 12,  9 }};
+private float[][] gauss = { {  9, 12,  9 },
+                            { 12, 15, 12 },
+                            {  9, 12,  9 } };
 
 void settings() {
-  size(800, 600);
+  size(2200, 600);
 }
 
 void setup() {
-  noLoop(); // no interactive behaviour: draw() will be called only once. 
   img = loadImage("board4.jpg");
-  //hueBar1 = new HScrollbar(0, 555, 800, 20);
-  //hueBar2 = new HScrollbar(0, 580, 800, 20);
+  noLoop(); // no interactive behaviour: draw() will be called only once. 
+  
+  // Hues that are primarily green
+  hue1 = 75;
+  hue2 = 140;
 }
 
 void draw() {
-  //hue1 = hueBar1.getPos() * 255;
-  //hue2 = hueBar2.getPos() * 255;
-  //System.out.println("hue1: " + hue1 + ", hue2: " + hue2);
-  hue1 = 90;
-  hue2 = 140;
-  
   background(color(0,0,0));
   PImage hbs = hueBrightnessSaturationThresholding(img, hue1, hue2, lower, upper, saturationBound);
   PImage conv = convolute(hbs, gauss);
-  PImage intThr = intensityThreshold(conv, 200);
+  PImage intThr = intensityThreshold(conv, 250);
   PImage sobeled = sobel(intThr);
   
-  image(sobeled, 0, 0);
+  image(img, 0, 0);
   ArrayList<PVector> lines = hough(sobeled, nLines);
   getIntersections(lines);
   QuadGraph qg = new QuadGraph();
   qg.build(lines, width, height);
-  List<int[]> cycles = qg.findCycles();
-  cycles = qg.filterCycles(cycles, lines);
+  List<int[]> quads = qg.findCycles();
+  quads = qg.filterCycles(quads, lines);
+  quads = qg.biggestAreaQuad(quads, lines);
   
-  drawQuads(cycles, lines);
+  drawQuads(quads, lines);
   
-  //hueBar1.display();
-  //hueBar1.update();
-  //hueBar2.display();
-  //hueBar2.update();
+  image(sobeled, 1400, 0);
 }
 
 /**
@@ -107,7 +111,12 @@ PImage intensityThreshold(PImage input, float intensity) {
 PImage convolute(PImage img, float[][] kernel) {
   // kernel size N = 3
   int N = kernel[0].length;
-  float weight = 99.f;
+  float weight = 0.f;
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      weight += kernel[i][j];
+    }
+  }
   
   // create a greyscale image (type: ALPHA) for output
   PImage result = createImage(img.width, img.height, ALPHA);
@@ -133,19 +142,22 @@ PImage convolute(PImage img, float[][] kernel) {
   return result;
 }
 
+/**
+ * Performs the sobel algorithm on a given image
+ */
 PImage sobel(PImage img) {
   float[][] hKernel = { { 0, 1, 0 }, 
                         { 0, 0, 0 },
                         { 0,-1, 0 } };
   float[][] vKernel = { { 0, 0, 0 }, 
                         { 1, 0,-1 },
-                        { 0, 0, 0 }};
-                        
+                        { 0, 0, 0 } };
+  
   int N = 3;
   float weight = 1.f;
-                        
+  
   PImage res = createImage(img.width, img.height, ALPHA);
-        
+  
   // clear the image
   for (int i = 0; i < img.width * img.height; i++) {
     res.pixels[i] = color(0);
@@ -190,6 +202,10 @@ PImage sobel(PImage img) {
   return res;
 }
 
+/**
+ * Performs edge detection using the Hough transform.
+ * Returns the nLines best lines found.
+ */
 ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   
   float discretizationStepsPhi = 0.06f;
@@ -205,7 +221,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   float ang = 0;
   float inverseR = 1.f / discretizationStepsR;
   for (int accPhi = 0; accPhi < phiDim; ang += discretizationStepsPhi, accPhi++) {
-    // we can also pre-multiply by (1/discretizationStepsR) since we need it in the Hough loop 
+    // we can also pre-multiply by (1/discretizationStepsR) since we need it in the Hough loop
     tabSin[accPhi] = (float) (sin(ang) * inverseR);
     tabCos[accPhi] = (float) (cos(ang) * inverseR);
   }
@@ -237,23 +253,8 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
     }
   }
   
-  // *************** UNCOMMENT TO DISPLAY THE PARAMETER SPACE ****************
-  //PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
-  //for (int i = 0; i < accumulator.length; i++) {
-  //  houghImg.pixels[i] = color(min(255, accumulator[i]));
-  //}
-  //// You may want to resize the accumulator to make it easier to see:
-  //houghImg.resize(400, 400);
-  //houghImg.updatePixels();
-  //image(houghImg, 0, 0);
-  // *************************************************************************
   
   ArrayList<Integer> bestCandidates = new ArrayList<Integer>();
-  for (int i = 0; i < accumulator.length; i++) {
-    if (accumulator[i] >= minVotes) {
-      bestCandidates.add(i);
-    }
-  }
   
   // size of the region we search for a local maximum
   int neighbourhood = 10;
@@ -265,7 +266,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
       int idx = (accPhi + 1) * (rDim + 2) + accR + 1;
       
       if (accumulator[idx] > minVotes) {
-        boolean bestCandidate=true;
+        boolean bestCandidate = true;
         
         // iterate over the neighbourhood
         for(int dPhi=-neighbourhood/2; dPhi < neighbourhood/2+1; dPhi++) { 
@@ -296,6 +297,7 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
   java.util.Collections.sort(bestCandidates, new HoughComparator(accumulator));
   
   ArrayList<PVector> lines = new ArrayList<PVector>();
+  println("Nb best candidates: " + bestCandidates.size());
   int nBest = (nLines <= bestCandidates.size()) ? nLines : bestCandidates.size();
   for (int i = 0; i < nBest; i++) {
     int idx = bestCandidates.get(i);
@@ -305,43 +307,60 @@ ArrayList<PVector> hough(PImage edgeImg, int nLines) {
     float phi = accPhi * discretizationStepsPhi;
     
     lines.add(new PVector(r, phi));
-
-    // Cartesian equation of a line: y = ax + b
-    // in polar, y = (-cos(phi)/sin(phi))x + (r/sin(phi))
-    // => y = 0 : x = r / cos(phi)
-    // => x = 0 : y = r / sin(phi)
-    // compute the intersection of this line with the 4 borders of // the image
-    int x0 = 0;
-    int y0 = (int) (r / sin(phi));
-    int x1 = (int) (r / cos(phi));
-    int y1 = 0;
-    int x2 = edgeImg.width;
-    int y2 = (int) (-cos(phi) / sin(phi) * x2 + r / sin(phi));
-    int y3 = edgeImg.width;
-    int x3 = (int) (-(y3 - r / sin(phi)) * (sin(phi) / cos(phi)));
-    // Finally, plot the lines
-    stroke(204,102,0);
-    if (y0 > 0) {
-     if (x1 > 0)
-       line(x0, y0, x1, y1);
-     else if (y2 > 0)
-       line(x0, y0, x2, y2);
-     else
-       line(x0, y0, x3, y3);
-    }
-    else {
-     if (x1 > 0) {
-       if (y2 > 0)
-         line(x1, y1, x2, y2);
-       else
-         line(x1, y1, x3, y3);
-     }
-     else
-       line(x2, y2, x3, y3);
-    }
+    //drawLine(edgeImg.width, r, phi);
   }
   
+  // *************** DISPLAY THE HOUGH ACCUMULATOR ****************
+  PImage houghImg = createImage(rDim + 2, phiDim + 2, ALPHA);
+  for (int i = 0; i < accumulator.length; i++) {
+    houghImg.pixels[i] = color(min(255, accumulator[i]));
+  }
+  // You may want to resize the accumulator to make it easier to see:
+  houghImg.resize(600, 600);
+  houghImg.updatePixels();
+  image(houghImg, 800, 0);
+  // **************************************************************
+  
   return lines;
+}
+
+/**
+ * Draws a line on the screen using the polar coordinates describing this line
+ */
+void drawLine(int edgeImgWidth, float r, float phi) {
+  // Cartesian equation of a line: y = ax + b
+  // in polar, y = (-cos(phi)/sin(phi))x + (r/sin(phi))
+  // => y = 0 : x = r / cos(phi)
+  // => x = 0 : y = r / sin(phi)
+  // compute the intersection of this line with the 4 borders of // the image
+  int x0 = 0;
+  int y0 = (int) (r / sin(phi));
+  int x1 = (int) (r / cos(phi));
+  int y1 = 0;
+  int x2 = edgeImgWidth;
+  int y2 = (int) (-cos(phi) / sin(phi) * x2 + r / sin(phi));
+  int y3 = edgeImgWidth;
+  int x3 = (int) (-(y3 - r / sin(phi)) * (sin(phi) / cos(phi)));
+  // Finally, plot the lines
+  stroke(204,102,0);
+  if (y0 > 0) {
+    if (x1 > 0)
+      line(x0, y0, x1, y1);
+    else if (y2 > 0)
+      line(x0, y0, x2, y2);
+    else
+      line(x0, y0, x3, y3);
+  }
+  else {
+    if (x1 > 0) {
+      if (y2 > 0)
+        line(x1, y1, x2, y2);
+      else
+        line(x1, y1, x3, y3);
+    }
+    else
+      line(x2, y2, x3, y3);
+  }
 }
 
 /**
@@ -357,10 +376,6 @@ ArrayList<PVector> getIntersections(List<PVector> lines) {
       // compute the intersection and add it to ’intersections’
       PVector inter = intersection(line1, line2);
       intersections.add(inter);
-      
-      // draw the intersection
-      fill(255, 128, 0);
-      ellipse(inter.x, inter.y, 10, 10);
     }
   }
   return intersections;
@@ -385,10 +400,23 @@ PVector intersection(PVector l1, PVector l2) {
 void drawQuads(List<int[]> quads, ArrayList<PVector> lines) {
   for (int[] quad : quads) {
     List<PVector> quadCorners = getQuadCornersFromCycle(quad, lines);
+    
     PVector c12 = quadCorners.get(0);
     PVector c23 = quadCorners.get(1);
     PVector c34 = quadCorners.get(2);
     PVector c41 = quadCorners.get(3);
+    
+    fill(255, 128, 0);
+    ellipse(c12.x, c12.y, 10, 10);
+    ellipse(c23.x, c23.y, 10, 10);
+    ellipse(c34.x, c34.y, 10, 10);
+    ellipse(c41.x, c41.y, 10, 10);
+    
+    stroke(204,102,0);
+    line(c12.x, c12.y, c23.x, c23.y);
+    line(c23.x, c23.y, c34.x, c34.y);
+    line(c34.x, c34.y, c41.x, c41.y);
+    line(c41.x, c41.y, c12.x, c12.y);
     
     // Choose a random, semi-transparent colour
     Random random = new Random();
