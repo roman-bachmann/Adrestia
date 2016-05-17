@@ -14,7 +14,13 @@ void setup() {
   noStroke();
   createCylinder();
   dashboard = new Dashboard();
+<<<<<<< HEAD
   ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius, dashboard); 
+=======
+  ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius, dashboard);
+  pillar = loadShape("Models/pillar.obj");
+  pillar.scale(2.5);
+>>>>>>> c39e3cce9360ca1c38791fee521ebefe358d90da
 }
 
 private final static float boxX = 300;
@@ -31,6 +37,7 @@ private PShape openCylinder = new PShape();
 private PShape cylinderTop = new PShape();
 private PShape cylinderBottom = new PShape();
 public ArrayList<PVector> cylinders = new ArrayList<PVector>(); // stores the position of all cylinders
+private PShape pillar = new PShape();
 
 private float rX = 0;    // rotation of the board in the x axis
 private float rZ = 0;    // rotation of the board in the y axis
@@ -186,10 +193,12 @@ void drawCylinders() {
   for(PVector c : cylinders) {
       pushMatrix();
       translate(c.x, -boxY/2, -c.y);
-      rotateX(PI/2);
-      shape(openCylinder);
-      shape(cylinderBottom);
-      shape(cylinderTop);
+      //rotateX(PI/2);
+      //shape(openCylinder);
+      //shape(cylinderBottom);
+      //shape(cylinderTop);
+      rotateX(PI);
+      shape(pillar);
       popMatrix();
   }
 }
