@@ -114,7 +114,7 @@ class QuadGraph {
    */
   List<int[]> filterCycles(List<int[]> cycles, List<PVector> lines) {
     float max_area = width * height;
-    float min_area = 100000;
+    float min_area = 50000;
     List<int[]> filtered = new ArrayList<int[]>();
     for (int[] quad: cycles) {
       List<PVector> qc = getQuadCornersFromCycle(quad, lines);
@@ -125,6 +125,25 @@ class QuadGraph {
         filtered.add(quad);
       }
     }
+    return filtered;
+  }
+  
+  /**
+   * Filters the quads for the biggest one found
+   */
+  List<int[]> biggestAreaQuad(List<int[]> cycles, List<PVector> lines) {
+    List<int[]> filtered = new ArrayList<int[]>();
+    int maxIdx = 0;
+    float maxArea = 0;
+    for (int i = 0; i < cycles.size(); i++) {
+      List<PVector> qc = getQuadCornersFromCycle(cycles.get(i), lines);
+      float area = getAreaFromQuad(qc.get(0), qc.get(1), qc.get(2), qc.get(3));
+      if (area > maxArea) {
+        maxArea = area;
+        maxIdx = i;
+      }
+    }
+    filtered.add(cycles.get(maxIdx));
     return filtered;
   }
 
@@ -263,7 +282,18 @@ class QuadGraph {
   /** Compute the area of a quad, and check it lays within a specific range
    */
   boolean validArea(PVector c1, PVector c2, PVector c3, PVector c4, float max_area, float min_area) {
+    
+    float area = getAreaFromQuad(c1, c2, c3, c4);
+    //System.out.println("Area: " + area);
 
+    boolean valid = (area < max_area && area > min_area);
+
+    if (!valid) System.out.println("Area out of range");
+
+    return valid;
+  }
+  
+  float getAreaFromQuad(PVector c1, PVector c2, PVector c3, PVector c4) {
     PVector v21= PVector.sub(c1, c2);
     PVector v32= PVector.sub(c2, c3);
     PVector v43= PVector.sub(c3, c4);
@@ -274,15 +304,7 @@ class QuadGraph {
     float i3=v43.cross(v14).z;
     float i4=v14.cross(v21).z;
 
-    float area = Math.abs(0.5f * (i1 + i2 + i3 + i4));
-
-    System.out.println("Area: " + area);
-
-    boolean valid = (area < max_area && area > min_area);
-
-    if (!valid) System.out.println("Area out of range");
-
-    return valid;
+    return Math.abs(0.5f * (i1 + i2 + i3 + i4));
   }
 
   /** Compute the (cosine) of the four angles of the quad, and check they are all large enough
