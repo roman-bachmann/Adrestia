@@ -14,13 +14,10 @@ void setup() {
   noStroke();
   createCylinder();
   dashboard = new Dashboard();
-<<<<<<< HEAD
-  ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius, dashboard); 
-=======
+  scrollbar = new HScrollbar(HSC_X, HSC_Y, HSC_WIDTH, HSC_HEIGHT);
   ball = new Mover(-1 * boxX / 2, boxX / 2, -1 * boxZ / 2, boxZ / 2, ballRadius, dashboard);
   pillar = loadShape("Models/pillar.obj");
   pillar.scale(2.5);
->>>>>>> c39e3cce9360ca1c38791fee521ebefe358d90da
 }
 
 private final static float boxX = 300;
@@ -44,9 +41,15 @@ private float rZ = 0;    // rotation of the board in the y axis
 private float speed = 1;
 
 private Dashboard dashboard;
-private Mover ball;
+private HScrollbar scrollbar;
+
+private final float HSC_X = 400;
+private final float HSC_Y = 688;
+private final float HSC_WIDTH = 300;
+private final float HSC_HEIGHT = 20;
 
 private final static float smoothness = 0.01;
+private Mover ball;
 private final static float ballOffset = ballRadius + (boxY / 2) + 1;
 
 
@@ -61,8 +64,10 @@ void draw() {
   if (!shiftDown) {
     pushMatrix();
     translate(width/2, height/2, 0);
+    
     rotateX(rX);
     rotateZ(rZ);
+
     box(boxX, boxY, boxZ);
     drawCylinders();
     translate(ball.location.x, -ballOffset, -ball.location.y);
@@ -90,6 +95,11 @@ void draw() {
   dashboard.drawBackground();
   dashboard.drawTopView(cylinders, cylinderBaseRadius, ballRadius, ball.location, boxX);
   dashboard.drawTextView();
+  dashboard.drawBarChart();
+  dashboard.drawStat();
+  dashboard.copyGraphList();
+  scrollbar.update();
+  scrollbar.display();
 }
 
 /**
@@ -98,13 +108,15 @@ void draw() {
   permit finer control over the rotation
 */
 void mouseDragged() {
-  rZ += (mouseX - pmouseX) * smoothness * speed;
-  if (rZ > PI/3) { rZ = PI/3; }
-  else if (rZ < -PI/3) { rZ = -PI/3; }
+  if (!scrollbar.mouseOver) {
+    rZ += (mouseX - pmouseX) * smoothness * speed;
+    if (rZ > PI/3) { rZ = PI/3; }
+    else if (rZ < -PI/3) { rZ = -PI/3; }
   
-  rX -= (mouseY - pmouseY) * smoothness * speed;
-  if (rX > PI/3) { rX = PI/3; }
-  else if (rX < -PI/3) { rX = -PI/3; } 
+    rX -= (mouseY - pmouseY) * smoothness * speed;
+    if (rX > PI/3) { rX = PI/3; }
+    else if (rX < -PI/3) { rX = -PI/3; } 
+  }
 }
 
 /**
