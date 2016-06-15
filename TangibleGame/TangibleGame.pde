@@ -13,13 +13,13 @@ import java.util.Random;
 
 void settings() {
   size(1024, 720, P3D);
-  noLoop();
 }
 
 void setup() {
-  img = loadImage("board1.jpg");
+  img = loadImage("board4.jpg");
   boardDraw = createGraphics(img.width, img.height, P2D);
   iteration = 0;
+  twoThree = new TwoDThreeD(img.width, img.height);
     
   noStroke();
   createCylinder();
@@ -47,7 +47,7 @@ public ArrayList<PVector> cylinders = new ArrayList<PVector>(); // stores the po
 private PShape pillar = new PShape();
 
 private float rX = 0;    // rotation of the board in the x axis
-private float rZ = 0;    // rotation of the board in the y axis
+private float rY = 0;    // rotation of the board in the y axis
 private float speed = 1;
 
 private Dashboard dashboard;
@@ -65,10 +65,6 @@ private final static float ballOffset = ballRadius + (boxY / 2) + 1;
 int iteration;
 
 void draw() {
-  println("bla");
-  
-  println("hello");
-  
   background(255);
   lights();
   fill(200);
@@ -80,12 +76,12 @@ void draw() {
     translate(width/2, height/2, 0);
     
     rotateX(rX);
-    rotateZ(rZ);
+    rotateZ(rY);
 
     box(boxX, boxY, boxZ);
     drawCylinders();
     translate(ball.location.x, -ballOffset, -ball.location.y);
-    ball.update(rX, rZ);
+    ball.update(rX, rY);
     ball.display();
     ball.checkEdges();
   } else {
@@ -115,12 +111,15 @@ void draw() {
   scrollbar.update();
   scrollbar.display();
   
-  if (iteration % 1 == 0) {
+  if (iteration % 10 == 0) {
     doDraw();
   }
   iteration ++;
   
-  image(boardDraw, 0, 0);
+  PImage boardDrawImg = boardDraw.get();
+  boardDrawImg.resize(320, 240);
+  
+  image(boardDrawImg, 0, 0);
 }
 
 /**
@@ -130,9 +129,9 @@ void draw() {
 */
 void mouseDragged() {
   if (!scrollbar.mouseOver) {
-    rZ += (mouseX - pmouseX) * smoothness * speed;
-    if (rZ > PI/3) { rZ = PI/3; }
-    else if (rZ < -PI/3) { rZ = -PI/3; }
+    rY += (mouseX - pmouseX) * smoothness * speed;
+    if (rY > PI/3) { rY = PI/3; }
+    else if (rY < -PI/3) { rY = -PI/3; }
   
     rX -= (mouseY - pmouseY) * smoothness * speed;
     if (rX > PI/3) { rX = PI/3; }
@@ -239,17 +238,14 @@ void drawCylinders() {
 
 
 
-
-
-
-
 /****** ImageProcessing *******/
 
 PImage img;
 PImage result;
 PGraphics boardDraw;
 
-float hue1, hue2;             // Lower and upper bound for the hue thresholding
+float hue1 = 75;
+float hue2 = 140;             // Lower and upper bound for the hue thresholding
 float lower = 20;             // Lower bound for the brightness thresholding
 float upper = 235;            // Upper bound for the brightness thresholding
 float saturationBound = 40;   // Bound for the saturation thresholding
@@ -272,38 +268,37 @@ void doDraw() {
   PImage sobeled = sobel(intThr);
   
   boardDraw.beginDraw();
-  boardDraw.image(hbs, 0, 0);
+  
+  boardDraw.background(color(0,0,0));
+  boardDraw.image(img, 0, 0);
+  ArrayList<PVector> lines = hough(sobeled, nLines);
+  getIntersections(lines);
+  QuadGraph qg = new QuadGraph();
+  qg.build(lines, width, height);
+  List<int[]> quads = qg.findCycles();
+  quads = qg.filterCycles(quads, lines);
+  quads = qg.biggestAreaQuad(quads, lines);
+  
+  drawQuads(quads, lines);
+ 
+  //Get rotation
+  List<PVector> quadIntersections = getQuadCornersFromCycle(quads.get(0), lines);
+  quadIntersections = qg.sortCorners(quadIntersections);
+  PVector rots = twoThree.get3DRotations(quadIntersections);
+  
+  rots.x = (rots.x > Math.PI/2) ? (float) (rots.x - Math.PI) : rots.x;
+  rots.x = (rots.x < -Math.PI/2) ? (float) (rots.x + Math.PI) : rots.x;
+ 
+  rotations = rots;
+  
+  rX = rots.x;
+  rY = rots.y;
+  
+  println("X-Rotation: " + Math.toDegrees(rots.x));
+  println("Y-Rotation: " + Math.toDegrees(rots.y));
+  println("Z-Rotation: " + Math.toDegrees(rots.z));
+ 
   boardDraw.endDraw();
-  
-  //boardDraw.beginDraw();
-  
-  //boardDraw.background(color(0,0,0));
-  //boardDraw.image(img, 0, 0);
-  //ArrayList<PVector> lines = hough(sobeled, nLines);
-  //getIntersections(lines);
-  //QuadGraph qg = new QuadGraph();
-  //qg.build(lines, width, height);
-  //List<int[]> quads = qg.findCycles();
-  //quads = qg.filterCycles(quads, lines);
-  //quads = qg.biggestAreaQuad(quads, lines);
-  
-  //drawQuads(quads, lines);
- 
-  ////Get rotation
-  //List<PVector> quadIntersections = getQuadCornersFromCycle(quads.get(0), lines);
-  //quadIntersections = qg.sortCorners(quadIntersections);
-  //PVector rots = twoThree.get3DRotations(quadIntersections);
-  
-  //rots.x = (rots.x > Math.PI/2) ? (float) (rots.x - Math.PI) : rots.x;
-  //rots.x = (rots.x < -Math.PI/2) ? (float) (rots.x + Math.PI) : rots.x;
- 
-  //rotations = rots;
-  
-  //println("X-Rotation: " + Math.toDegrees(rots.x));
-  //println("Y-Rotation: " + Math.toDegrees(rots.y));
-  //println("Z-Rotation: " + Math.toDegrees(rots.z));
- 
-  //boardDraw.endDraw();
 }
 
 /**
@@ -667,10 +662,11 @@ void drawQuads(List<int[]> quads, ArrayList<PVector> lines) {
     boardDraw.line(c41.x, c41.y, c12.x, c12.y);
     
     // Choose a random, semi-transparent colour and draw the quad surface
-    Random random = new Random();
-    boardDraw.fill(color(min(255, random.nextInt(300)),
-    min(255, random.nextInt(300)),
-    min(255, random.nextInt(300)), 50));
+    //Random random = new Random();
+    //boardDraw.fill(color(min(255, random.nextInt(300)),
+    //min(255, random.nextInt(300)),
+    //min(255, random.nextInt(300)), 50));
+    boardDraw.fill(color(255, 247, 0, 100));
     boardDraw.quad(c12.x,c12.y,c23.x,c23.y,c34.x,c34.y,c41.x,c41.y);
   }
 }

@@ -36,7 +36,7 @@ class TwoDThreeD {
 
   PVector get3DRotations(List<PVector> points2D) {
     
-    Mat.print(physicalCorners, 2);
+    //Mat.print(physicalCorners, 2);
     
     // 1- Solve the extrinsic matrix from the projected 2D points
     double[][] E = solveExtrinsicMatrix(points2D);
