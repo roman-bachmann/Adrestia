@@ -1,6 +1,6 @@
 /**
   @Project ADRESTIA; CS211 - Introduction to Visual Computing
-  @File Game.pde
+  @File TangibleGame.pde
   @Authors Roman Bachmann
            Michael Allemann
            Andrea Caforio
@@ -16,10 +16,11 @@ void settings() {
 }
 
 void setup() {
-  img = loadImage("board4.jpg");
-  boardDraw = createGraphics(img.width, img.height, P2D);
+  cam = new Movie(this, "testvideo.mp4");
+  cam.loop();
+  boardDraw = createGraphics(640, 480, P2D);
   iteration = 0;
-  twoThree = new TwoDThreeD(img.width, img.height);
+  twoThree = new TwoDThreeD(640, 480);
     
   noStroke();
   createCylinder();
@@ -118,7 +119,6 @@ void draw() {
   
   PImage boardDrawImg = boardDraw.get();
   boardDrawImg.resize(320, 240);
-  
   image(boardDrawImg, 0, 0);
 }
 
@@ -171,6 +171,13 @@ void keyReleased() {
 void mouseClicked() {
   if (shiftDown)
     mouseClick = true;
+}
+
+/**
+ * Called every time a new frame is available to read
+ */
+void movieEvent(Movie m) {
+  m.read();
 }
 
 /**
@@ -241,16 +248,17 @@ void drawCylinders() {
 /****** ImageProcessing *******/
 
 PImage img;
+Movie cam;
 PImage result;
 PGraphics boardDraw;
 
 float hue1 = 75;
 float hue2 = 140;             // Lower and upper bound for the hue thresholding
-float lower = 20;             // Lower bound for the brightness thresholding
+float lower = 30;             // Lower bound for the brightness thresholding
 float upper = 235;            // Upper bound for the brightness thresholding
 float saturationBound = 40;   // Bound for the saturation thresholding
 
-int minVotes = 190;           // Minimal accumulator value for line selection in Hough transform
+int minVotes = 150;           // Minimal accumulator value for line selection in Hough transform
 int nLines = 6;               // Maximal number of lines the Hough transform returns
 
 float[][] gauss = { {  9, 12,  9 },        // Kernel used to perform a gaussian blur
@@ -261,6 +269,8 @@ TwoDThreeD twoThree;
 PVector rotations;
 
 void doDraw() {
+  
+  img = cam.get();
   
   PImage hbs = hueBrightnessSaturationThresholding(img, hue1, hue2, lower, upper, saturationBound);
   PImage conv = convolute(hbs, gauss);
@@ -282,22 +292,24 @@ void doDraw() {
   drawQuads(quads, lines);
  
   //Get rotation
-  List<PVector> quadIntersections = getQuadCornersFromCycle(quads.get(0), lines);
-  quadIntersections = qg.sortCorners(quadIntersections);
-  PVector rots = twoThree.get3DRotations(quadIntersections);
+  if (quads.size() != 0) {
+    List<PVector> quadIntersections = getQuadCornersFromCycle(quads.get(0), lines);
+    quadIntersections = qg.sortCorners(quadIntersections);
+    PVector rots = twoThree.get3DRotations(quadIntersections);
+      
+    rots.x = (rots.x > Math.PI/2) ? (float) (rots.x - Math.PI) : rots.x;
+    rots.x = (rots.x < -Math.PI/2) ? (float) (rots.x + Math.PI) : rots.x;
+     
+    rotations = rots;
+      
+    rX = rots.x;
+    rY = rots.y;
+      
+    println("X-Rotation: " + Math.toDegrees(rots.x));
+    println("Y-Rotation: " + Math.toDegrees(rots.y));
+    println("Z-Rotation: " + Math.toDegrees(rots.z));
+  }
   
-  rots.x = (rots.x > Math.PI/2) ? (float) (rots.x - Math.PI) : rots.x;
-  rots.x = (rots.x < -Math.PI/2) ? (float) (rots.x + Math.PI) : rots.x;
- 
-  rotations = rots;
-  
-  rX = rots.x;
-  rY = rots.y;
-  
-  println("X-Rotation: " + Math.toDegrees(rots.x));
-  println("Y-Rotation: " + Math.toDegrees(rots.y));
-  println("Z-Rotation: " + Math.toDegrees(rots.z));
- 
   boardDraw.endDraw();
 }
 
@@ -583,24 +595,24 @@ void drawLine(int edgeImgWidth, float r, float phi) {
   int y3 = edgeImgWidth;
   int x3 = (int) (-(y3 - r / sin(phi)) * (sin(phi) / cos(phi)));
   // Finally, plot the lines
-  stroke(204,102,0);
+  boardDraw.stroke(204,102,0);
   if (y0 > 0) {
     if (x1 > 0)
-      line(x0, y0, x1, y1);
+      boardDraw.line(x0, y0, x1, y1);
     else if (y2 > 0)
-      line(x0, y0, x2, y2);
+      boardDraw.line(x0, y0, x2, y2);
     else
-      line(x0, y0, x3, y3);
+      boardDraw.line(x0, y0, x3, y3);
   }
   else {
     if (x1 > 0) {
       if (y2 > 0)
-        line(x1, y1, x2, y2);
+        boardDraw.line(x1, y1, x2, y2);
       else
-        line(x1, y1, x3, y3);
+        boardDraw.line(x1, y1, x3, y3);
     }
     else
-      line(x2, y2, x3, y3);
+      boardDraw.line(x2, y2, x3, y3);
   }
 }
 
@@ -666,7 +678,7 @@ void drawQuads(List<int[]> quads, ArrayList<PVector> lines) {
     //boardDraw.fill(color(min(255, random.nextInt(300)),
     //min(255, random.nextInt(300)),
     //min(255, random.nextInt(300)), 50));
-    boardDraw.fill(color(255, 247, 0, 100));
+    boardDraw.fill(color(255, 247, 0, 100));  // For video, choose just one colour
     boardDraw.quad(c12.x,c12.y,c23.x,c23.y,c34.x,c34.y,c41.x,c41.y);
   }
 }

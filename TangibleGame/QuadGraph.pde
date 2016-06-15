@@ -114,7 +114,7 @@ class QuadGraph {
    */
   List<int[]> filterCycles(List<int[]> cycles, List<PVector> lines) {
     float max_area = width * height;
-    float min_area = 50000;
+    float min_area = 10000;
     List<int[]> filtered = new ArrayList<int[]>();
     for (int[] quad: cycles) {
       List<PVector> qc = getQuadCornersFromCycle(quad, lines);
@@ -143,7 +143,9 @@ class QuadGraph {
         maxIdx = i;
       }
     }
-    filtered.add(cycles.get(maxIdx));
+    if (cycles.size() != 0) {
+      filtered.add(cycles.get(maxIdx));
+    }
     return filtered;
   }
 
@@ -309,7 +311,8 @@ class QuadGraph {
   boolean nonFlatQuad(PVector c1, PVector c2, PVector c3, PVector c4) {
 
     // cos(70deg) ~= 0.3
-    float min_cos = 0.5f;
+    //float min_cos = 0.5f;  //(original value)
+    float min_cos = 0.85f;
 
     PVector v21= PVector.sub(c1, c2);
     PVector v32= PVector.sub(c2, c3);
